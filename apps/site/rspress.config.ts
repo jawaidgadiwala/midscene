@@ -47,6 +47,9 @@ export default defineConfig(async () => {
   });
   return {
     root: path.join(__dirname, 'docs'),
+    // Project sites are served from a subpath (e.g. /midscene/ on GitHub
+    // Pages). Defaults to the root so the canonical deploy is unaffected.
+    base: process.env.SITE_BASE || '/',
     title: 'Midscene - Vision-Driven UI Automation',
     description: 'AI-powered, vision-driven UI automation for every platform.',
     icon: '/favicon.png',
