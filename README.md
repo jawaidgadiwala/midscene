@@ -71,8 +71,8 @@ Read more about [Model Strategy](https://midscenejs.com/model-strategy).
 
 You can also drive Midscene through a coding-agent CLI you are already signed in
 to, with no API key in your config: [Claude
-CLI](https://midscenejs.com/model-claude-cli) or [Codex
-CLI](https://midscenejs.com/model-codex-cli). There is an [Agent
+CLI](./apps/site/docs/en/model-claude-cli.mdx) or [Codex
+CLI](./apps/site/docs/en/model-codex-cli.mdx). There is an [Agent
 Skill](./skills/midscene-cli-provider/SKILL.md) that sets this up for you.
 
 
