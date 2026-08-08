@@ -157,5 +157,5 @@ DEBUG=midscene:ai:call:codex      npx midscene ./suite.yaml
 
 ## Reference
 
-- [Use the Claude CLI](https://midscenejs.com/model-claude-cli)
-- [Use the Codex CLI](https://midscenejs.com/model-codex-cli)
+- [Use the Claude CLI](https://github.com/jawaidgadiwala/midscene/blob/main/apps/site/docs/en/model-claude-cli.mdx)
+- [Use the Codex CLI](https://github.com/jawaidgadiwala/midscene/blob/main/apps/site/docs/en/model-codex-cli.mdx)
