@@ -77,3 +77,9 @@ DEBUG=midscene:ai:call:claude-cli npx midscene ./your-script.yaml
 
 它会打印每次进程启动时解析出的模型和 payload 结构。CLI 侧的失败（未登录、模型名
 错误、超时）会以明确说明原因的错误抛出。
+
+## 延伸阅读
+
+- [使用 Codex CLI](./model-codex-cli.mdx) —— 同样的思路，基于 Codex。它复用一个
+  长期存活的 app-server 连接，而不是每次调用都新建进程；其线程会继承当前进程的
+  工作目录。

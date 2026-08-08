@@ -84,3 +84,9 @@ DEBUG=midscene:ai:call:claude-cli npx midscene ./your-script.yaml
 That logs each spawn with the resolved model and payload shape. Failures from
 the CLI (not logged in, unknown model, timeout) surface as errors that name the
 cause.
+
+## See also
+
+- [Use the Codex CLI](./model-codex-cli.mdx) — the same idea, backed by Codex.
+  It keeps one long-lived app-server connection instead of spawning a process
+  per call, and its thread inherits the process working directory.
