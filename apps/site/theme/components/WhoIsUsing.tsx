@@ -1,3 +1,4 @@
+import { withBase } from '@rspress/core/runtime';
 import { useI18n } from '../i18n';
 
 type LogoOnly = {
@@ -167,7 +168,7 @@ export function WhoIsUsing() {
               {company.kind === 'logo' ? (
                 <>
                   <img
-                    src={company.logo}
+                    src={withBase(company.logo)}
                     alt={company.name}
                     style={{ width: company.logoWidth, maxWidth: '100%' }}
                     className={`h-auto max-h-full object-contain ${
@@ -177,7 +178,7 @@ export function WhoIsUsing() {
                   />
                   {company.logoDark && (
                     <img
-                      src={company.logoDark}
+                      src={withBase(company.logoDark)}
                       alt={company.name}
                       style={{ width: company.logoWidth, maxWidth: '100%' }}
                       className="hidden h-auto max-h-full object-contain dark:block"
@@ -188,7 +189,7 @@ export function WhoIsUsing() {
               ) : (
                 <div className="flex items-center gap-3">
                   <img
-                    src={company.icon}
+                    src={withBase(company.icon)}
                     alt=""
                     style={{
                       width: company.iconSize,
