@@ -1,0 +1,66 @@
+name: Deploy docs site to GitHub Pages
+
+# Publishes apps/site to https://<owner>.github.io/<repo>/ so fork-only docs
+# (the claude:// and codex:// provider pages) have real URLs.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/site/**'
+      - 'README.md'
+      - 'README.zh.md'
+      - '.github/workflows/deploy-site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a deploy mid-flight; queue instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.3.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # The root `prepare` script builds every workspace package, which the
+      # site depends on.
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build site
+        env:
+          # Project pages are served from /<repo>/, not the domain root.
+          SITE_BASE: /${{ github.event.repository.name }}/
+          # Required by scripts/github-stars.ts on production builds.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter doc build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/site/doc_build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
