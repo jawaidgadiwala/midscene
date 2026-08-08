@@ -69,6 +69,11 @@ Midscene is all-in on pure vision for UI actions: element localization is based 
 
 Read more about [Model Strategy](https://midscenejs.com/model-strategy).
 
+You can also drive Midscene through a coding-agent CLI you are already signed in
+to, with no API key in your config: [Claude
+CLI](https://midscenejs.com/model-claude-cli) or [Codex
+CLI](https://midscenejs.com/model-codex-cli).
+
 
 
 ## 📄 Resources
