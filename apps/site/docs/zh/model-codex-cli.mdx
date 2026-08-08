@@ -1,0 +1,90 @@
+# 使用 Codex CLI 作为模型服务
+
+Midscene 可以把所有模型调用交给本地安装的
+[Codex](https://developers.openai.com/codex/cli) CLI，而不是走 HTTP 模型接口。CLI
+使用它自己已登录的账号进行鉴权，因此你可以用 ChatGPT 订阅驱动 Midscene，配置里不
+需要任何 OpenAI API Key。
+
+## 前置条件
+
+- `codex` 可执行文件在 `PATH` 中，并且已经登录（`codex login`）。
+- Node.js 运行时。该 provider 会启动子进程，因此不支持浏览器、Chrome 插件，以及
+  Bridge Mode 中运行在页面内的部分。
+
+## 配置
+
+```bash
+# 通过 CLI 的 app-server 协议调用模型。
+export MIDSCENE_MODEL_BASE_URL=codex://app-server
+
+export MIDSCENE_MODEL_NAME=gpt-5.6-sol
+export MIDSCENE_MODEL_FAMILY=gpt-5
+
+# Midscene 的配置链路上仍然需要一个 API Key 字段，
+# 但 codex:// provider 不会把它发送到任何地方。
+export MIDSCENE_MODEL_API_KEY=codex-cli-no-key-needed
+```
+
+`MIDSCENE_MODEL_FAMILY` 是必填项。缺少它时，Midscene 无法解析定位（locate）调用
+返回的坐标，`aiTap`、`aiHover` 等所有依赖定位的操作都会直接失败。
+
+`MIDSCENE_MODEL_NAME` 会原样作为 Codex 线程的模型传入，因此必须是你的 Codex
+账号真实可用的模型。
+
+### 推理配置
+
+Codex 的 reasoning effort 由 Midscene 的通用配置推导：
+
+```bash
+export MIDSCENE_MODEL_REASONING_ENABLED=1
+export MIDSCENE_MODEL_REASONING_EFFORT=medium   # none | minimal | low | medium | high | xhigh
+```
+
+当 `MIDSCENE_MODEL_REASONING_ENABLED` 未设置或为 false 时，effort 会以 `none`
+发送；启用但未显式指定 effort 时，默认为 `medium`。
+
+### 超时
+
+`MIDSCENE_MODEL_TIMEOUT`（毫秒）限制单次调用，默认 `600000`。
+
+## 工作原理
+
+该 provider 会启动一个长期存活的 `codex app-server` 子进程，并通过 stdio 上的
+JSON-RPC 与之通信。连接在多次模型调用之间复用，调用被串行化，因此不同于「每次调用
+都新建进程」的方式，进程启动开销只付一次。
+
+Midscene 中 OpenAI 格式的消息数组会被压平成一次 Codex turn：`system` 消息成为该
+turn 的 developer instructions，其余消息组成带 `[USER]` / `[ASSISTANT]` 标记的
+对话文本，截图则作为 image input 一并传入。超长文本会从头部截断，以保留最近的
+上下文。
+
+Codex 线程以 `approvalPolicy: 'never'` 和 `sandbox: 'read-only'` 启动，因此模型
+无法修改文件或在你的机器上执行命令。需要注意的是，线程的工作目录就是当前进程的
+`cwd`，这意味着项目中的 `AGENTS.md` 会进入该 turn 的上下文。
+
+Token 用量会通过 Midscene 常规的用量统计回传，因此报告和 `onUsage` 回调的表现与
+其他 provider 一致。
+
+## 取舍
+
+- **没有 `response_format`**：app-server 协议不提供 JSON 模式，JSON 约定依赖
+  Midscene 的提示词，并使用宽松解析。实践中足够稳定，但并非接口层面的强约束。
+- **推理成本**：较高的 reasoning effort 会明显增加单次调用耗时。对 UI 自动化来说
+  `low` 或 `medium` 通常足够，配合[缓存](./caching.mdx)可以让重复运行几乎不再产生
+  这部分开销。
+- **定位能力**：定位结果按页面像素坐标下的 bounding box 解析。在 Web 自动化中足够
+  准确（Midscene 还会同时提供元素树）；但在只有截图的场景下，专门为 GUI 定位训练的
+  模型在小目标上可能更精确。
+
+## 调试
+
+```bash
+DEBUG=midscene:ai:call:codex npx midscene ./your-script.yaml
+```
+
+它会打印 app-server 连接的生命周期以及每次 turn。CLI 侧的失败（未登录、模型名
+错误、超时）会以明确说明原因的错误抛出。
+
+## 延伸阅读
+
+- [使用 Claude CLI](./model-claude-cli.mdx) —— 同样的思路，基于 Claude Code。

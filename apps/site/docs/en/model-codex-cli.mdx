@@ -1,0 +1,100 @@
+# Use the Codex CLI as the model provider
+
+Midscene can route every model call through the locally installed
+[Codex](https://developers.openai.com/codex/cli) CLI instead of an HTTP model
+endpoint. The CLI authenticates with whatever account it is already signed in
+as, so a ChatGPT subscription can drive Midscene with no OpenAI API key
+anywhere in your config.
+
+## Requirements
+
+- The `codex` binary on your `PATH`, already signed in (`codex login`).
+- A Node.js runtime. This provider spawns a child process, so it does not work
+  in the browser, the Chrome extension, or Bridge Mode's in-page half.
+
+## Configuration
+
+```bash
+# Route model calls through the CLI's app-server protocol.
+export MIDSCENE_MODEL_BASE_URL=codex://app-server
+
+export MIDSCENE_MODEL_NAME=gpt-5.6-sol
+export MIDSCENE_MODEL_FAMILY=gpt-5
+
+# Midscene threads an API key through its config plumbing, but the codex://
+# provider never sends it anywhere.
+export MIDSCENE_MODEL_API_KEY=codex-cli-no-key-needed
+```
+
+`MIDSCENE_MODEL_FAMILY` is required. Without it Midscene does not know how to
+read the coordinates that come back from a locate call, and every `aiTap`,
+`aiHover`, or other locate-driven action fails immediately.
+
+`MIDSCENE_MODEL_NAME` is passed straight through as the Codex thread's model, so
+it must name a model your Codex account can actually use.
+
+### Reasoning
+
+Codex reasoning effort is derived from the standard Midscene keys:
+
+```bash
+export MIDSCENE_MODEL_REASONING_ENABLED=1
+export MIDSCENE_MODEL_REASONING_EFFORT=medium   # none | minimal | low | medium | high | xhigh
+```
+
+With `MIDSCENE_MODEL_REASONING_ENABLED` unset or false, effort is sent as
+`none`. With it enabled but no explicit effort, it defaults to `medium`.
+
+### Timeout
+
+`MIDSCENE_MODEL_TIMEOUT` (milliseconds) bounds a single turn. It defaults to
+`600000`.
+
+## How it works
+
+The provider starts one long-lived `codex app-server` child process and speaks
+JSON-RPC to it over stdio. The connection is reused across model calls and turns
+are serialized, so unlike a spawn-per-call provider you pay the process start
+cost only once.
+
+Midscene's OpenAI-shaped message array is flattened into a single Codex turn:
+`system` messages become the turn's developer instructions, the remaining
+messages become a tagged `[USER]` / `[ASSISTANT]` transcript, and screenshots
+ride along as image inputs. Very long transcripts are truncated from the front
+so the most recent context survives.
+
+The Codex thread is started with `approvalPolicy: 'never'` and
+`sandbox: 'read-only'`, so the model cannot edit files or run commands on your
+machine. Note that the thread's working directory is the process's own `cwd`,
+which means your project's `AGENTS.md` is in scope for the turn.
+
+Token usage is reported back through the normal Midscene usage tracking, so
+reports and `onUsage` callbacks work as they do with any provider.
+
+## Trade-offs
+
+- **No `response_format`.** The app-server protocol has no JSON mode, so the
+  JSON contract rests on Midscene's prompts and the response is parsed
+  leniently. This is reliable in practice but not enforced by the API.
+- **Reasoning cost.** A high reasoning effort noticeably increases per-call
+  latency. For UI automation, `low` or `medium` is usually enough, and
+  [caching](./caching.mdx) removes the cost from repeat runs entirely.
+- **Grounding.** Locate results are read as bounding boxes in page pixels, which
+  is accurate for web automation where Midscene also supplies the element tree.
+  On screenshot-only surfaces, a model trained specifically for GUI grounding
+  may locate small targets more precisely.
+
+## Debugging
+
+```bash
+DEBUG=midscene:ai:call:codex npx midscene ./your-script.yaml
+```
+
+That logs the app-server connection lifecycle and each turn. Failures from the
+CLI (not signed in, unknown model, timeout) surface as errors that name the
+cause.
+
+## See also
+
+- [Use the Claude CLI](./model-claude-cli.mdx) — the same idea, backed by Claude
+  Code.
