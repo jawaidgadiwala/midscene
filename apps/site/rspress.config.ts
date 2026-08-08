@@ -8,6 +8,13 @@ import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
 import { getGitHubStars } from './scripts/github-stars';
 
+// Project sites are served from a subpath (e.g. /midscene/ on GitHub Pages).
+// Assets referenced from config are not rewritten by rspress, so they need the
+// prefix applied by hand.
+const SITE_BASE = process.env.SITE_BASE || '/';
+const withSiteBase = (assetPath: string) =>
+  `${SITE_BASE.replace(/\/$/, '')}${assetPath}`;
+
 const SITE_URL = 'https://midscenejs.com';
 const FAVICON_URL = `${SITE_URL}/favicon.png`;
 const OG_IMAGE_URL = `${SITE_URL}/og-image.png`;
@@ -49,13 +56,13 @@ export default defineConfig(async () => {
     root: path.join(__dirname, 'docs'),
     // Project sites are served from a subpath (e.g. /midscene/ on GitHub
     // Pages). Defaults to the root so the canonical deploy is unaffected.
-    base: process.env.SITE_BASE || '/',
+    base: SITE_BASE,
     title: 'Midscene - Vision-Driven UI Automation',
     description: 'AI-powered, vision-driven UI automation for every platform.',
     icon: '/favicon.png',
     logo: {
-      light: '/midscene_with_text_light.png',
-      dark: '/midscene_with_text_dark.png',
+      light: withSiteBase('/midscene_with_text_light.png'),
+      dark: withSiteBase('/midscene_with_text_dark.png'),
     },
     head: [
       [

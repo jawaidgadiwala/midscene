@@ -1,3 +1,4 @@
+import { withBase } from '@rspress/core/runtime';
 import { useI18n, useI18nUrl } from '../i18n';
 import { TiltCard } from './TiltCard';
 
@@ -156,7 +157,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/images/platforms/web-light.png"
+                        src={withBase('/images/platforms/web-light.png')}
                         alt="Web"
                         className="w-[240px] h-[150px]"
                       />
@@ -171,7 +172,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/images/platforms/web-dark.png"
+                        src={withBase('/images/platforms/web-dark.png')}
                         alt="Web"
                         className="w-[240px] h-[150px]"
                       />
@@ -201,7 +202,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/images/platforms/pc-light.svg"
+                        src={withBase('/images/platforms/pc-light.svg')}
                         alt="PC"
                         className="w-[240px] h-[150px]"
                       />
@@ -216,7 +217,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/images/platforms/pc-dark.svg"
+                        src={withBase('/images/platforms/pc-dark.svg')}
                         alt="PC"
                         className="w-[240px] h-[150px]"
                       />
@@ -249,12 +250,12 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/images/platforms/android-light.png"
+                        src={withBase('/images/platforms/android-light.png')}
                         alt="Android"
                         className="w-[90px] h-[186px]"
                       />
                       <img
-                        src="/images/platforms/ios-light.png"
+                        src={withBase('/images/platforms/ios-light.png')}
                         alt="iOS"
                         className="w-[90px] h-[186px]"
                       />
@@ -269,12 +270,12 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/images/platforms/android-dark.png"
+                        src={withBase('/images/platforms/android-dark.png')}
                         alt="Android"
                         className="w-[90px] h-[186px]"
                       />
                       <img
-                        src="/images/platforms/ios-dark.png"
+                        src={withBase('/images/platforms/ios-dark.png')}
                         alt="iOS"
                         className="w-[90px] h-[186px]"
                       />
@@ -304,7 +305,9 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/images/platforms/any-interface-light.png"
+                        src={withBase(
+                          '/images/platforms/any-interface-light.png',
+                        )}
                         alt="Any Interface"
                         className="w-[240px] h-[139px]"
                       />
@@ -319,7 +322,9 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/images/platforms/any-interface-dark.png"
+                        src={withBase(
+                          '/images/platforms/any-interface-dark.png',
+                        )}
                         alt="Any Interface"
                         className="w-[240px] h-[139px]"
                       />
@@ -503,7 +508,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/multi-model.png"
+                        src={withBase('/icon/multi-model.png')}
                         alt="Multi-model combo"
                         className="w-[120px] h-[105px]"
                       />
@@ -518,7 +523,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/multi-model-dark.png"
+                        src={withBase('/icon/multi-model-dark.png')}
                         alt="Multi-model combo"
                         className="w-[150px] h-auto"
                       />
@@ -603,7 +608,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/ai-action.svg"
+                        src={withBase('/icon/ai-action.svg')}
                         alt="Rich APIs"
                         className="w-12 h-12 md:w-16 md:h-16"
                       />
@@ -618,7 +623,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/ai-action.svg"
+                        src={withBase('/icon/ai-action.svg')}
                         alt="Rich APIs"
                         className="w-12 h-12 md:w-16 md:h-16"
                       />
@@ -648,7 +653,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/ai-tap.svg"
+                        src={withBase('/icon/ai-tap.svg')}
                         alt="Skills"
                         className="w-12 h-12 md:w-16 md:h-16"
                       />
@@ -663,7 +668,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/ai-tap.svg"
+                        src={withBase('/icon/ai-tap.svg')}
                         alt="Skills"
                         className="w-12 h-12 md:w-16 md:h-16"
                       />
@@ -696,7 +701,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/playback-report.svg"
+                        src={withBase('/icon/playback-report.svg')}
                         alt="Reports & Playground"
                         className="w-12 h-12 md:w-16 md:h-16"
                       />
@@ -711,7 +716,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/playback-report.svg"
+                        src={withBase('/icon/playback-report.svg')}
                         alt="Reports & Playground"
                         className="w-12 h-12 md:w-16 md:h-16"
                       />
@@ -741,7 +746,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/ai-query.svg"
+                        src={withBase('/icon/ai-query.svg')}
                         alt="Flexible Integration"
                         className="w-12 h-12 md:w-16 md:h-16"
                       />
@@ -756,7 +761,7 @@ export function FeatureSections() {
                       }}
                     >
                       <img
-                        src="/icon/ai-query.svg"
+                        src={withBase('/icon/ai-query.svg')}
                         alt="Flexible Integration"
                         className="w-12 h-12 md:w-16 md:h-16"
                       />
