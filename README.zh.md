@@ -75,7 +75,8 @@ Midscene 在 UI 操作上完全采用纯视觉路线：元素定位仅基于截�
 
 你也可以直接用已登录的编码智能体 CLI 驱动 Midscene，配置中无需任何 API Key：[Claude
 CLI](https://midscenejs.com/zh/model-claude-cli) 或 [Codex
-CLI](https://midscenejs.com/zh/model-codex-cli)。
+CLI](https://midscenejs.com/zh/model-codex-cli)。我们也提供了对应的
+[Agent Skill](./skills/midscene-cli-provider/SKILL.md)。
 
 
 
