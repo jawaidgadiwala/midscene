@@ -1,0 +1,86 @@
+# Use the Claude CLI as the model provider
+
+Midscene can route every model call through the locally installed
+[Claude Code](https://claude.com/claude-code) CLI instead of an HTTP model
+endpoint. The CLI authenticates with whatever account it is already logged in
+as, so a Claude subscription can drive Midscene with no Anthropic API key
+anywhere in your config.
+
+## Requirements
+
+- The `claude` binary on your `PATH`, already signed in (`claude` once
+  interactively, or `claude login`).
+- A Node.js runtime. This provider spawns a child process, so it does not work
+  in the browser, the Chrome extension, or Bridge Mode's in-page half.
+
+## Configuration
+
+```bash
+# Route model calls through the CLI. The part after the scheme is the model,
+# and accepts anything `claude --model` accepts.
+export MIDSCENE_MODEL_BASE_URL=claude://opus
+
+export MIDSCENE_MODEL_NAME=claude-opus-5
+export MIDSCENE_MODEL_FAMILY=claude
+
+# Midscene threads an API key through its config plumbing, but the claude://
+# provider never sends it anywhere.
+export MIDSCENE_MODEL_API_KEY=claude-cli-no-key-needed
+```
+
+`MIDSCENE_MODEL_FAMILY=claude` is required. Without it Midscene does not know
+how to read the coordinates that come back from a locate call.
+
+A bare `claude://` leaves model selection to the CLI's own default.
+
+### Optional settings
+
+| Variable | Meaning |
+| --- | --- |
+| `MIDSCENE_CLAUDE_CLI_PATH` | Path to the `claude` binary. Defaults to `claude` on `PATH`. |
+| `MIDSCENE_CLAUDE_CLI_TIMEOUT` | Per-call timeout in milliseconds. Defaults to `600000`. |
+| `MIDSCENE_CLAUDE_CLI_EXTRA_ARGS` | Extra CLI flags, space separated. For example `--effort high`. |
+
+## How it works
+
+Each model call spawns `claude -p` with `--input-format stream-json
+--output-format stream-json`. Midscene's OpenAI-shaped message array is
+flattened into a single user turn: `system` messages become the CLI's
+`--system-prompt`, and every screenshot is passed inline as an image block next
+to the text that describes it.
+
+The child process is deliberately constrained:
+
+- File, shell, and network tools are disabled — the model only needs to look at
+  a screenshot and answer.
+- It runs in a temp directory with `--setting-sources ''`, so your project's
+  `CLAUDE.md`, settings, and MCP servers never leak into the automation prompt.
+- `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, and `ANTHROPIC_BASE_URL` are
+  stripped from the child environment. Otherwise an inherited key would silently
+  redirect billing to an API account, which is the opposite of the point.
+
+Token usage and cost are reported back through the normal Midscene usage
+tracking, so reports and `onUsage` callbacks work as they do with any provider.
+
+## Trade-offs
+
+- **Latency.** A process spawn plus a fresh session costs a few seconds per
+  call. Turn on [caching](./caching.mdx) so repeat runs replay the cached plan
+  instead of re-planning.
+- **No `response_format`.** The CLI has no JSON mode, so the JSON contract is
+  restated in the system prompt and the response is parsed leniently. This is
+  reliable in practice but not enforced by the API.
+- **Grounding.** Claude returns a bounding box in page pixels. This is accurate
+  for web automation, where Midscene also supplies the element tree. For
+  screenshot-only surfaces, a model trained specifically for GUI grounding may
+  still locate small targets more precisely.
+
+## Debugging
+
+```bash
+DEBUG=midscene:ai:call:claude-cli npx midscene ./your-script.yaml
+```
+
+That logs each spawn with the resolved model and payload shape. Failures from
+the CLI (not logged in, unknown model, timeout) surface as errors that name the
+cause.

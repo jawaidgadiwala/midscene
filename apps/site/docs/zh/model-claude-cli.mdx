@@ -1,0 +1,79 @@
+# 使用 Claude CLI 作为模型服务
+
+Midscene 可以把所有模型调用交给本地安装的
+[Claude Code](https://claude.com/claude-code) CLI，而不是走 HTTP 模型接口。CLI
+使用它自己已登录的账号进行鉴权，因此你可以用 Claude 订阅驱动 Midscene，配置里不需要
+任何 Anthropic API Key。
+
+## 前置条件
+
+- `claude` 可执行文件在 `PATH` 中，并且已经登录（先交互式运行一次 `claude`，或执行
+  `claude login`）。
+- Node.js 运行时。该 provider 会启动子进程，因此不支持浏览器、Chrome 插件，以及
+  Bridge Mode 中运行在页面内的部分。
+
+## 配置
+
+```bash
+# 通过 CLI 调用模型。scheme 后面的部分是模型名，
+# 支持 `claude --model` 接受的任意取值。
+export MIDSCENE_MODEL_BASE_URL=claude://opus
+
+export MIDSCENE_MODEL_NAME=claude-opus-5
+export MIDSCENE_MODEL_FAMILY=claude
+
+# Midscene 的配置链路上仍然需要一个 API Key 字段，
+# 但 claude:// provider 不会把它发送到任何地方。
+export MIDSCENE_MODEL_API_KEY=claude-cli-no-key-needed
+```
+
+`MIDSCENE_MODEL_FAMILY=claude` 是必填项。缺少它时，Midscene 无法正确解析定位
+（locate）调用返回的坐标。
+
+如果只写 `claude://`，则由 CLI 自己决定使用哪个模型。
+
+### 可选配置
+
+| 变量 | 含义 |
+| --- | --- |
+| `MIDSCENE_CLAUDE_CLI_PATH` | `claude` 可执行文件路径，默认使用 `PATH` 中的 `claude`。 |
+| `MIDSCENE_CLAUDE_CLI_TIMEOUT` | 单次调用超时时间（毫秒），默认 `600000`。 |
+| `MIDSCENE_CLAUDE_CLI_EXTRA_ARGS` | 额外的 CLI 参数，以空格分隔，例如 `--effort high`。 |
+
+## 工作原理
+
+每次模型调用都会以 `--input-format stream-json --output-format stream-json`
+启动一个 `claude -p` 进程。Midscene 中 OpenAI 格式的消息数组会被压平成一次用户
+输入：`system` 消息成为 CLI 的 `--system-prompt`，每张截图作为 image block 内联
+在描述它的文本旁边。
+
+子进程被刻意限制：
+
+- 文件、命令行与网络工具全部禁用 —— 模型只需要看截图并回答。
+- 进程运行在临时目录中，并带上 `--setting-sources ''`，因此项目里的 `CLAUDE.md`、
+  settings 和 MCP server 不会混入自动化提示词。
+- 子进程环境中的 `ANTHROPIC_API_KEY`、`ANTHROPIC_AUTH_TOKEN`、
+  `ANTHROPIC_BASE_URL` 会被清除。否则继承下来的 Key 会让计费悄悄走 API 账号，
+  与该 provider 的目的正好相反。
+
+Token 用量与成本会通过 Midscene 常规的用量统计回传，因此报告和 `onUsage` 回调的
+表现与其他 provider 一致。
+
+## 取舍
+
+- **延迟**：进程启动加上新建会话，每次调用会多出几秒。建议开启
+  [缓存](./caching.mdx)，让重复运行直接复用缓存的执行计划。
+- **没有 `response_format`**：CLI 不提供 JSON 模式，因此 JSON 约定通过系统提示词
+  重申，并使用宽松解析。实践中足够稳定，但并非接口层面的强约束。
+- **定位能力**：Claude 返回的是页面像素坐标下的 bounding box。在 Web 自动化中足够
+  准确（Midscene 还会同时提供元素树）；但在只有截图的场景下，专门为 GUI 定位训练的
+  模型在小目标上可能更精确。
+
+## 调试
+
+```bash
+DEBUG=midscene:ai:call:claude-cli npx midscene ./your-script.yaml
+```
+
+它会打印每次进程启动时解析出的模型和 payload 结构。CLI 侧的失败（未登录、模型名
+错误、超时）会以明确说明原因的错误抛出。

@@ -189,6 +189,10 @@ export default defineConfig(async () => {
             link: '/model-config',
           },
           {
+            text: 'Use the Claude CLI',
+            link: '/model-claude-cli',
+          },
+          {
             sectionHeaderText: 'Web browser',
           },
           {
@@ -336,6 +340,10 @@ export default defineConfig(async () => {
           {
             text: '全部配置项',
             link: '/zh/model-config',
+          },
+          {
+            text: '使用 Claude CLI',
+            link: '/zh/model-claude-cli',
           },
           {
             sectionHeaderText: 'Web 浏览器',

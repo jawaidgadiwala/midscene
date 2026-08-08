@@ -7,6 +7,7 @@ import type {
   ModelRuntime,
 } from '../model-adapter/types';
 import { autoGlmAdapters } from './auto-glm/adapter';
+import { claudeAdapters } from './claude';
 import { defaultOpenAICompatibleAdapterConfig } from './default';
 import { doubaoAdapters } from './doubao';
 import { geminiAdapters } from './gemini';
@@ -25,6 +26,7 @@ export const MODEL_ADAPTER_CONFIGS = {
   ...glmAdapters,
   ...autoGlmAdapters,
   ...gptAdapters,
+  ...claudeAdapters,
   ...kimiAdapters,
   ...mimoAdapters,
 } satisfies Record<TModelFamily, ModelAdapterDefinition>;

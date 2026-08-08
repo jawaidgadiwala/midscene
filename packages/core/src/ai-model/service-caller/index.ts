@@ -46,6 +46,8 @@ import {
 } from '../model-call-recorder';
 import type { ModelRuntime } from '../models';
 import type { AIArgs } from '../types';
+import type { ClaudeCliRecordEvent } from './claude-cli';
+import { callAIWithClaudeCli, isClaudeCliProvider } from './claude-cli';
 import {
   callAIWithCodexAppServer,
   isCodexAppServerProvider,
@@ -401,6 +403,78 @@ export async function callAI(
   };
   const imageDetail =
     adapter.chatCompletion.resolveImageDetail(chatCompletionInput);
+
+  if (isClaudeCliProvider(modelConfig.openaiBaseURL)) {
+    let claudeChunkSequence = 0;
+    const claudeStartTime = Date.now();
+    const recordClaudeEvent = recordEvent
+      ? (event: ClaudeCliRecordEvent) => {
+          if (event.type === 'chunk') {
+            claudeChunkSequence += 1;
+            recordEvent({
+              ...event,
+              attempt: 1,
+              sequence: claudeChunkSequence,
+              provider: 'claude-cli',
+            });
+            return;
+          }
+
+          recordEvent({
+            ...event,
+            attempt: 1,
+            provider: 'claude-cli',
+          });
+        }
+      : undefined;
+
+    try {
+      const claudeResult = await callAIWithClaudeCli(messages, modelConfig, {
+        stream: options?.stream,
+        onChunk: options?.onChunk,
+        abortSignal: options?.abortSignal,
+        expectedJsonObjectResponse: options?.expectedJsonObjectResponse,
+        onRecordEvent: recordClaudeEvent,
+      });
+      const { protocolMetadata, ...response } = claudeResult;
+      recordEvent?.({
+        type: 'response',
+        attempt: 1,
+        provider: 'claude-cli',
+        final: {
+          content: response.content,
+          reasoningContent: response.reasoning_content,
+          usage: response.usage,
+          timeCost: Date.now() - claudeStartTime,
+          protocol: protocolMetadata,
+        },
+      });
+      if (response.usage) {
+        (response.usage as any)[INTERNAL_CALL_ID_FIELD] = internalCallId;
+        if (modelRuntime.onUsage) {
+          modelRuntime.onUsage(response.usage);
+        }
+      }
+      return {
+        ...response,
+      };
+    } catch (error) {
+      recordEvent?.({
+        type: 'error',
+        attempt: 1,
+        provider: 'claude-cli',
+        error:
+          error instanceof Error
+            ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack,
+              }
+            : String(error),
+      });
+      throw error;
+    }
+  }
 
   if (isCodexAppServerProvider(modelConfig.openaiBaseURL)) {
     let protocolChunkSequence = 0;
