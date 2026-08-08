@@ -193,6 +193,10 @@ export default defineConfig(async () => {
             link: '/model-claude-cli',
           },
           {
+            text: 'Use the Codex CLI',
+            link: '/model-codex-cli',
+          },
+          {
             sectionHeaderText: 'Web browser',
           },
           {
@@ -344,6 +348,10 @@ export default defineConfig(async () => {
           {
             text: '使用 Claude CLI',
             link: '/zh/model-claude-cli',
+          },
+          {
+            text: '使用 Codex CLI',
+            link: '/zh/model-codex-cli',
           },
           {
             sectionHeaderText: 'Web 浏览器',
