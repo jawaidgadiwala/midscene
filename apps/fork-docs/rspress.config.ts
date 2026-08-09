@@ -45,6 +45,10 @@ export default defineConfig({
           ],
         },
         {
+          text: 'What a desktop run captures',
+          link: '/desktop-capture-scope',
+        },
+        {
           text: 'Agent Skill',
           link: '/skill',
         },

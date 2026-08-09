@@ -40,6 +40,7 @@ A bare `claude://` leaves model selection to the CLI's own default.
 | `MIDSCENE_CLAUDE_CLI_PATH` | Path to the `claude` binary. Defaults to `claude` on `PATH`. |
 | `MIDSCENE_CLAUDE_CLI_TIMEOUT` | Per-call timeout in milliseconds. Defaults to `600000`. |
 | `MIDSCENE_CLAUDE_CLI_EXTRA_ARGS` | Extra CLI flags, space separated. For example `--effort high`. |
+| `MIDSCENE_CLAUDE_CLI_SLOW_WARN` | Milliseconds before a still-running call logs a warning. Defaults to `60000`. |
 
 ## How it works
 
@@ -84,6 +85,18 @@ DEBUG=midscene:ai:call:claude-cli npx midscene ./your-script.yaml
 That logs each spawn with the resolved model and payload shape. Failures from
 the CLI (not logged in, unknown model, timeout) surface as errors that name the
 cause.
+
+## Retrying a failed locate
+
+`--retry` does not help a locate that returned the wrong element. These
+providers run at a low temperature, so a repeated locate on an unchanged screen
+re-derives the same coordinates — the retry costs a second call and fails
+identically. Retries are worth having for genuinely flaky conditions (a slow
+page, a transient network error), not for a target the model resolved
+confidently and wrongly.
+
+If a locate is consistently wrong, change the prompt or the screen, not the
+retry count.
 
 ## See also
 

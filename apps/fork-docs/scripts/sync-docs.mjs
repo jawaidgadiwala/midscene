@@ -12,7 +12,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SOURCE_DIR = path.join(__dirname, '../../site/docs/en');
 const TARGET_DIR = path.join(__dirname, '../docs');
 
-const PAGES = ['model-claude-cli.mdx', 'model-codex-cli.mdx'];
+const PAGES = [
+  'model-claude-cli.mdx',
+  'model-codex-cli.mdx',
+  'desktop-capture-scope.mdx',
+];
 
 // Pages that exist upstream but not here have to become absolute links.
 const EXTERNAL_LINKS = {
