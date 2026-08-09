@@ -1,0 +1,43 @@
+# What a desktop run actually captures
+
+Worth knowing before pointing Midscene at the `computer` target on a machine you
+use for anything else.
+
+## The whole screen goes to the model
+
+The desktop target has no concept of a window. Every step captures the **entire
+display** — the app under test, every other window that happens to be visible,
+your menu bar, and any notification that arrives mid-run. That image is:
+
+1. sent to the model provider, and
+2. embedded in the HTML report under `midscene_run/report/`.
+
+Reports are self-contained files with the screenshots inlined, so a report is as
+sensitive as the screen was at the moment it was taken. Attaching one to a bug
+tracker attaches everything that was on screen.
+
+This is inherent to a vision-driven approach on a desktop, not a defect. It is
+called out here because it is easy not to think about until a report is already
+shared.
+
+## Reducing what is exposed
+
+- **Run on a clean desktop.** A dedicated user account or a fresh Space keeps
+  unrelated windows out of the frame.
+- **Turn on Do Not Disturb.** A notification that appears mid-run is captured
+  and sent like anything else.
+- **Treat `midscene_run/` as sensitive.** It is gitignored by default; keep it
+  that way, and prune old reports rather than letting them accumulate.
+- **Prefer a targeted platform where one exists.** For anything reachable in a
+  browser, the web target captures only the viewport.
+
+## A note on capture permissions
+
+macOS requires Screen Recording permission for the terminal that runs Midscene.
+Without it, capture silently returns a black frame — the model then reports that
+it cannot see the element, which reads like a locate failure rather than a
+permissions problem.
+
+If every step reports an empty or black screen, check
+**System Settings → Privacy & Security → Screen Recording** for your terminal
+before debugging anything else.

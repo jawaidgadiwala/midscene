@@ -207,6 +207,10 @@ export default defineConfig(async () => {
             link: '/model-codex-cli',
           },
           {
+            text: 'What a desktop run captures',
+            link: '/desktop-capture-scope',
+          },
+          {
             sectionHeaderText: 'Web browser',
           },
           {
@@ -362,6 +366,10 @@ export default defineConfig(async () => {
           {
             text: '使用 Codex CLI',
             link: '/zh/model-codex-cli',
+          },
+          {
+            text: '桌面端运行时截取了什么',
+            link: '/zh/desktop-capture-scope',
           },
           {
             sectionHeaderText: 'Web 浏览器',

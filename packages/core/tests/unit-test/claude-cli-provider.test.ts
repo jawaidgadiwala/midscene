@@ -2,10 +2,11 @@ import {
   buildClaudeCliPayloadFromMessages,
   isClaudeCliProvider,
   resolveClaudeCliModel,
+  resolveSlowWarnMs,
 } from '@/ai-model/service-caller/claude-cli';
 import type { IModelConfig } from '@midscene/shared/env';
 import type { ChatCompletionMessageParam } from 'openai/resources/index';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 const baseModelConfig: IModelConfig = {
   modelName: 'claude-opus-5',
@@ -123,5 +124,39 @@ describe('claude cli provider helpers', () => {
     expect(content).toEqual([
       { type: 'text', text: 'Please answer the latest user request.' },
     ]);
+  });
+});
+
+describe('claude cli slow-call warning', () => {
+  const original = process.env.MIDSCENE_CLAUDE_CLI_SLOW_WARN;
+
+  afterEach(() => {
+    if (original === undefined) {
+      Reflect.deleteProperty(process.env, 'MIDSCENE_CLAUDE_CLI_SLOW_WARN');
+    } else {
+      process.env.MIDSCENE_CLAUDE_CLI_SLOW_WARN = original;
+    }
+  });
+
+  it('warns a minute in by default', () => {
+    Reflect.deleteProperty(process.env, 'MIDSCENE_CLAUDE_CLI_SLOW_WARN');
+    expect(resolveSlowWarnMs(600_000)).toBe(60_000);
+  });
+
+  it('honours an explicit value', () => {
+    process.env.MIDSCENE_CLAUDE_CLI_SLOW_WARN = '5000';
+    expect(resolveSlowWarnMs(600_000)).toBe(5_000);
+  });
+
+  it('never warns after the deadline it is warning about', () => {
+    process.env.MIDSCENE_CLAUDE_CLI_SLOW_WARN = '90000';
+    expect(resolveSlowWarnMs(30_000)).toBe(30_000);
+  });
+
+  it('falls back to the default when the value is not a positive number', () => {
+    for (const value of ['0', '-1', 'soon', '']) {
+      process.env.MIDSCENE_CLAUDE_CLI_SLOW_WARN = value;
+      expect(resolveSlowWarnMs(600_000)).toBe(60_000);
+    }
   });
 });

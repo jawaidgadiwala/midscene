@@ -22,6 +22,10 @@ import type { ChatCompletionMessageParam } from 'openai/resources/index';
 const CLAUDE_CLI_PROVIDER_SCHEME = 'claude://';
 const CLAUDE_CLI_DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
 
+// The timeout is deliberately generous, which means a stalled call is silent
+// for ten minutes before it says anything. Speak up long before that.
+const CLAUDE_CLI_DEFAULT_SLOW_WARN_MS = 60 * 1000;
+
 // Tools are pointless here: this provider only needs the model to look at a
 // screenshot and answer. Leaving them enabled invites the CLI to wander into
 // the filesystem and burn turns.
@@ -206,6 +210,17 @@ const resolveTimeoutMs = (): number => {
     : CLAUDE_CLI_DEFAULT_TIMEOUT_MS;
 };
 
+export const resolveSlowWarnMs = (timeoutMs: number): number => {
+  const raw = process.env.MIDSCENE_CLAUDE_CLI_SLOW_WARN?.trim();
+  const parsed = raw ? Number(raw) : Number.NaN;
+  const configured =
+    Number.isFinite(parsed) && parsed > 0
+      ? parsed
+      : CLAUDE_CLI_DEFAULT_SLOW_WARN_MS;
+  // A warning that fires after the timeout would never be seen.
+  return Math.min(configured, timeoutMs);
+};
+
 /**
  * The child must authenticate as the logged-in CLI user. An inherited
  * ANTHROPIC_API_KEY would silently redirect billing to the API account, which
@@ -380,6 +395,17 @@ export async function callAIWithClaudeCli(
     };
 
     const timeoutMs = resolveTimeoutMs();
+    const slowWarnMs = resolveSlowWarnMs(timeoutMs);
+    const slowWarnTimer = setTimeout(() => {
+      warnClaudeCli(
+        `claude cli has been running for ${Math.round(
+          slowWarnMs / 1000,
+        )}s without finishing (model=${model ?? 'default'}). It will be killed at ${Math.round(
+          timeoutMs / 1000,
+        )}s. Set MIDSCENE_CLAUDE_CLI_SLOW_WARN to change this notice, MIDSCENE_CLAUDE_CLI_TIMEOUT to change the deadline.`,
+      );
+    }, slowWarnMs);
+
     const timer = setTimeout(() => {
       finish(() => {
         try {
@@ -407,6 +433,7 @@ export async function callAIWithClaudeCli(
 
     function cleanup() {
       clearTimeout(timer);
+      clearTimeout(slowWarnTimer);
       options?.abortSignal?.removeEventListener('abort', onAbort);
     }
 

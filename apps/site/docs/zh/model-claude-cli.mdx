@@ -39,6 +39,7 @@ export MIDSCENE_MODEL_API_KEY=claude-cli-no-key-needed
 | `MIDSCENE_CLAUDE_CLI_PATH` | `claude` 可执行文件路径，默认使用 `PATH` 中的 `claude`。 |
 | `MIDSCENE_CLAUDE_CLI_TIMEOUT` | 单次调用超时时间（毫秒），默认 `600000`。 |
 | `MIDSCENE_CLAUDE_CLI_EXTRA_ARGS` | 额外的 CLI 参数，以空格分隔，例如 `--effort high`。 |
+| `MIDSCENE_CLAUDE_CLI_SLOW_WARN` | 调用仍在进行时打印警告的毫秒数，默认 `60000`。 |
 
 ## 工作原理
 
@@ -77,6 +78,15 @@ DEBUG=midscene:ai:call:claude-cli npx midscene ./your-script.yaml
 
 它会打印每次进程启动时解析出的模型和 payload 结构。CLI 侧的失败（未登录、模型名
 错误、超时）会以明确说明原因的错误抛出。
+
+## 定位失败时的重试
+
+`--retry` 无法修复「定位到了错误元素」的情况。这些 provider 以较低的温度运行，
+因此在页面没有变化时重复定位会得到完全相同的坐标：重试多花一次调用，并以同样的
+方式失败。重试适用于真正的偶发问题（页面加载慢、网络抖动），而不适用于模型自信
+地给出错误结果的场景。
+
+如果定位持续出错，应该调整提示词或页面状态，而不是调大重试次数。
 
 ## 延伸阅读
 
