@@ -381,6 +381,13 @@ class YamlBatchExecutor {
           );
         }
 
+        // Persist the verdicts so far. The summary is otherwise written once, at
+        // the very end of the batch, so a run interrupted at any point leaves NO
+        // machine-readable record: the files really ran and their reports are on
+        // disk, but nothing states whether they passed. On a long batch that means
+        // losing an entire pass to a kill in its final minute.
+        this.flushPartialSummary([...executedResults, executedContext]);
+
         return executedContext;
       };
 
@@ -510,6 +517,36 @@ class YamlBatchExecutor {
 
     return results;
   }
+
+  /**
+   * Write the summary for the files finished so far, so an interrupted batch
+   * still leaves a usable verdict.
+   *
+   * Best-effort by design: this is bookkeeping, and a failure to write it must
+   * never take down a run that is otherwise working. The warning is emitted once
+   * rather than per file, since a broken output path would otherwise print on
+   * every completion for the rest of the batch.
+   *
+   * Under concurrency the snapshot may lag by a file or two — the final write in
+   * `generateOutputIndex` is still authoritative.
+   */
+  private flushPartialSummary(
+    executedContexts: Array<MidsceneYamlFileContext & { duration: number }>,
+  ): void {
+    try {
+      const results = executedContexts.map(({ file, player, duration }) =>
+        createExecutedYamlResult({ file, player, duration }),
+      );
+      writeExecutionSummaryFile(this.config.summary, results);
+    } catch (error) {
+      if (!this.partialSummaryWarned) {
+        this.partialSummaryWarned = true;
+        console.error('Failed to write partial execution summary:', error);
+      }
+    }
+  }
+
+  private partialSummaryWarned = false;
 
   private async loadFileConfig(file: string): Promise<MidsceneYamlScript> {
     const content = readFileSync(file, 'utf8');
